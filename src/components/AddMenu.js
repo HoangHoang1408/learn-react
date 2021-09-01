@@ -1,7 +1,8 @@
-import { Fragment } from "react";
+import { Fragment, useContext, useRef } from "react";
 import reactDom from "react-dom";
 import styled from "styled-components";
-import Button from "../UI/Button";
+import MainContext from "../store/mainStore";
+import Button from "./UI/Button";
 
 const StyledAddMenu = styled.section`
   position: fixed;
@@ -75,11 +76,29 @@ const StyledAddMenu = styled.section`
   }
 `;
 const AddMenu = function (props) {
+  const ctx = useContext(MainContext);
+  const refTitle = useRef(null);
+  const refDesc = useRef(null);
+  const refPrice = useRef(null);
+  const handleAddNewMenu = function (e) {
+    e.preventDefault();
+    const menu = {
+      title: refTitle.current.value,
+      descript: refDesc.current.value,
+      price: refPrice.current.value,
+      id: Math.random().toString(),
+    };
+    refTitle.current.value = "";
+    refDesc.current.value = "";
+    refPrice.current.value = "";
+    ctx.onAddMenuClose();
+    ctx.onAddNewMenu(menu);
+  };
   return (
     <Fragment>
       {reactDom.createPortal(
         <StyledAddMenu>
-          <div className="overlay"></div>
+          <div className="overlay" onClick={ctx.onAddMenuClose}></div>
           <div className="addMenu">
             <h1>Add a menu</h1>
             <form>
@@ -87,18 +106,20 @@ const AddMenu = function (props) {
                 <label htmlFor="title">Title:</label>
                 <input
                   type="text"
-                  id="title"
+                  id="title1"
                   required
                   className="input"
+                  ref={refTitle}
                 ></input>
               </div>
               <div className="part">
                 <label htmlFor="description">Descript:</label>
                 <input
                   type="text"
-                  id="description"
+                  id="description1"
                   required
                   className="input"
+                  ref={refDesc}
                 ></input>
               </div>
               <div className="part">
@@ -107,14 +128,21 @@ const AddMenu = function (props) {
                   type="number"
                   step="1"
                   min="0"
-                  id="price"
+                  id="price1"
                   required
                   className="input"
+                  ref={refPrice}
                 ></input>
               </div>
               <div className="part special">
-                <Button className="button">Add</Button>
-                <Button>Close</Button>
+                <Button
+                  type="submit"
+                  className="button"
+                  onClick={handleAddNewMenu}
+                >
+                  Add
+                </Button>
+                <Button onClick={ctx.onAddMenuClose}>Close</Button>
               </div>
             </form>
           </div>

@@ -1,7 +1,9 @@
-import React, { Fragment } from "react";
+import React, { Fragment, useContext } from "react";
 import reactDom from "react-dom";
 import styled from "styled-components";
-import Button from "../UI/Button";
+import MainContext from "../store/mainStore";
+import CartItem from "./CartItem";
+import Button from "./UI/Button";
 
 const StyledCart = styled.section`
   position: fixed;
@@ -27,10 +29,8 @@ const StyledCart = styled.section`
     border-radius: 1rem;
     background-color: white;
     width: 50vw;
-    height: 40vh;
     color: black;
     display: grid;
-    grid-template-rows: 2fr 1fr 1fr;
   }
   .button {
     margin-right: 0.5rem;
@@ -39,55 +39,38 @@ const StyledCart = styled.section`
     display: flex;
     justify-content: space-between;
   }
-  .cart__top {
-    border-bottom: 2px solid rgba(0, 0, 0, 0.4);
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
-    font-weight: 600;
+  .cart__body {
   }
   .cart__bottom {
     justify-content: flex-end;
-  }
-  .a1 {
-    display: flex;
-    justify-content: space-between;
-    width: 200%;
-  }
-  .price {
-    color: rgb(117, 46, 19);
   }
   h1 {
     font-size: 1.5rem;
     margin-bottom: 0.8rem;
   }
 `;
-const Cart = function (props) {
+const Cart = function () {
+  const ctx = useContext(MainContext);
+  let totalPrice = 0;
+  const cartItems = ctx.cartItem.map((e) => {
+    totalPrice += e.price * e.amount;
+    return <CartItem item={e} key={e.id}></CartItem>;
+  });
+
   return (
     <Fragment>
       {reactDom.createPortal(
         <StyledCart>
-          <div className="overlay"></div>
+          <div className="overlay" onClick={ctx.onCartClose}></div>
           <div className="cart">
-            <div className="cart__top part">
-              <div>
-                <h1>Title</h1>
-                <div class="a1">
-                  <p className="price">$100</p>
-                  <p>x 2</p>
-                </div>
-              </div>
-              <div>
-                <Button className="button">+</Button>
-                <Button>-</Button>
-              </div>
-            </div>
+            {cartItems}
             <div className="cart__body part">
-              <h1>Total Amount</h1>
-              <h2 className="price">$200</h2>
+              <h1>Total Price</h1>
+              <h2 className="price">${totalPrice}</h2>
             </div>
             <div className="cart__bottom part">
               <Button className="button">Order</Button>
-              <Button>Close</Button>
+              <Button onClick={ctx.onCartClose}>Close</Button>
             </div>
           </div>
         </StyledCart>,

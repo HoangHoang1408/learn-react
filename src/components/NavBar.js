@@ -1,4 +1,6 @@
+import { useContext } from "react";
 import styled from "styled-components";
+import MainContext from "../store/mainStore";
 
 const StyledNavBar = styled.nav`
   position: sticky;
@@ -38,12 +40,18 @@ const StyledNavBar = styled.nav`
   }
 `;
 const NavBar = (props) => {
+  const ctx = useContext(MainContext);
+  const totalItem = ctx.cartItem.reduce((total, item) => {
+    return (total += item.amount);
+  }, 0);
   return (
     <StyledNavBar className={props.className}>
       <div className="nav__title">ReactMeals</div>
-      <div className="nav__item">Add Menu</div>
-      <div className="nav__item">
-        Your Cart<span className="cart__number">2</span>
+      <div className="nav__item" onClick={ctx.onAddMenuOpen}>
+        Add Menu
+      </div>
+      <div className="nav__item" onClick={ctx.onCartOpen}>
+        Your Cart<span className="cart__number">{totalItem}</span>
       </div>
     </StyledNavBar>
   );
