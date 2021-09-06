@@ -1,13 +1,13 @@
-import { Fragment, useContext, useRef } from "react";
+import { Fragment, useContext, useEffect, useState } from "react";
 import reactDom from "react-dom";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import MainContext from "../store/mainStore";
 import Button from "./UI/Button";
+import Input from "./UI/Form/Input";
+import useInput from "./UI/Form/useInput";
 
 const StyledAddMenu = styled.section`
   position: fixed;
-  top: 0;
-  left: 0;
   width: 100vw;
   height: 100vh;
   z-index: 5;
@@ -44,102 +44,93 @@ const StyledAddMenu = styled.section`
     width: 100%;
     height: 100%;
   }
-  label {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: coral;
-    place-self: center end;
-  }
-  .part {
-    width: 70%;
-    height: 100%;
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    place-items: center;
-    border-bottom: 2px solid rgba(0, 0, 0, 0.2);
-  }
-  .special {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    border: none;
-  }
-  .input {
-    padding: 0.5rem;
-    outline: none;
-    border: 3px solid coral;
-    color: coral;
-    font-size: 1rem;
-  }
-  .button {
-    margin-right: 0.5rem;
-  }
+  ${({ valid }) =>
+    !valid &&
+    css`
+      .button {
+        opacity: 0.6;
+      }
+      .button:hover {
+        transform: none;
+      }
+    `}
 `;
 const AddMenu = function (props) {
   const ctx = useContext(MainContext);
-  const refTitle = useRef(null);
-  const refDesc = useRef(null);
-  const refPrice = useRef(null);
-  const handleAddNewMenu = function (e) {
+  const [valid, setValid] = useState(false);
+  const { state: descState, setState: setDescState } = useInput();
+  const { state: titleState, setState: setTitleState } = useInput();
+  const { state: priceState, setState: setPriceState } = useInput();
+  const checkDesc = (val) => val.length > 0;
+  const checkTitle = (val) => val.length > 0;
+  const checkPrice = (val) => val > 0;
+  const temp = descState.isValid && titleState.isValid && priceState.isValid;
+  useEffect(() => {
+    setValid(temp);
+  }, [temp]);
+  const handleSubmit = async function (e) {
     e.preventDefault();
-    const menu = {
-      title: refTitle.current.value,
-      descript: refDesc.current.value,
-      price: refPrice.current.value,
-      id: Math.random().toString(),
-    };
-    refTitle.current.value = "";
-    refDesc.current.value = "";
-    refPrice.current.value = "";
-    ctx.onAddMenuClose();
-    ctx.onAddNewMenu(menu);
+    if (!valid) return;
+    try {
+      const res = await fetch(
+        "https://learn-react-676ec-default-rtdb.asia-southeast1.firebasedatabase.app/menus.json",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: titleState.input,
+            descript: descState.input,
+            price: Math.round(priceState.input * 100) / 100,
+            id: Math.random().toString(),
+          }),
+        }
+      );
+      if (!res.ok) throw Error("Post fail");
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setDescState.reset();
+      setPriceState.reset();
+      setTitleState.reset();
+      setTimeout(() => {
+        ctx.onReFetch();
+        ctx.onAddMenuClose();
+      }, 500);
+    }
   };
   return (
     <Fragment>
       {reactDom.createPortal(
-        <StyledAddMenu>
+        <StyledAddMenu valid={valid}>
           <div className="overlay" onClick={ctx.onAddMenuClose}></div>
           <div className="addMenu">
             <h1>Add a menu</h1>
-            <form>
-              <div className="part">
-                <label htmlFor="title">Title:</label>
-                <input
-                  type="text"
-                  id="title1"
-                  required
-                  className="input"
-                  ref={refTitle}
-                ></input>
-              </div>
-              <div className="part">
-                <label htmlFor="description">Descript:</label>
-                <input
-                  type="text"
-                  id="description1"
-                  required
-                  className="input"
-                  ref={refDesc}
-                ></input>
-              </div>
-              <div className="part">
-                <label htmlFor="price">Price:</label>
-                <input
-                  type="number"
-                  step="1"
-                  min="0"
-                  id="price1"
-                  required
-                  className="input"
-                  ref={refPrice}
-                ></input>
-              </div>
-              <div className="part special">
-                <Button
-                  type="submit"
-                  className="button"
-                  onClick={handleAddNewMenu}
-                >
+            <form onSubmit={handleSubmit}>
+              <Input
+                state={titleState}
+                setState={setTitleState}
+                checkFunc={checkTitle}
+                type="text"
+                id="Title"
+              ></Input>
+              <Input
+                state={descState}
+                setState={setDescState}
+                checkFunc={checkDesc}
+                type="text"
+                id="Description"
+              ></Input>
+              <Input
+                state={priceState}
+                setState={setPriceState}
+                checkFunc={checkPrice}
+                type="number"
+                id="Price"
+              ></Input>
+              <div>
+                <Button type="submit" className="button">
                   Add
                 </Button>
                 <Button onClick={ctx.onAddMenuClose}>Close</Button>

@@ -2,6 +2,7 @@ import React, { useReducer } from "react";
 const MainContext = React.createContext({
   cartOpen: undefined,
   addMenuOpen: undefined,
+  reFetch: undefined,
   onCartOpen: undefined,
   onCartClose: undefined,
   onAddMenuClose: undefined,
@@ -12,6 +13,7 @@ const MainContext = React.createContext({
   onAddCartItem: undefined,
   onAddAmount: undefined,
   onDecreaseAmount: undefined,
+  onReFetch: undefined,
 });
 
 const dummyMenu = [
@@ -45,6 +47,7 @@ const DefaultState = {
   cartItem: [],
   cartOpen: false,
   addMenuOpen: false,
+  refetch: false,
 };
 const MainReducer = (state, action) => {
   if (action.type === "CART_OPEN") {
@@ -104,6 +107,11 @@ const MainReducer = (state, action) => {
     newState.menu.push(action.menu);
     return newState;
   }
+  if (action.type === "REFETCH") {
+    const newState = JSON.parse(JSON.stringify(state));
+    newState.reFetch = !newState.reFetch;
+    return newState;
+  }
 };
 export const MainContextProvider = (props) => {
   const [state, dispatchStateAction] = useReducer(MainReducer, DefaultState);
@@ -133,7 +141,9 @@ export const MainContextProvider = (props) => {
   const handleAddNewMenu = function (menu) {
     dispatchStateAction({ type: "ADDNEWMENU", menu });
   };
-
+  const handleRefetch = function () {
+    dispatchStateAction({ type: "REFETCH" });
+  };
   return (
     <MainContext.Provider
       value={{
@@ -141,6 +151,7 @@ export const MainContextProvider = (props) => {
         cartItem: state.cartItem,
         cartOpen: state.cartOpen,
         addMenuOpen: state.addMenuOpen,
+        reFetch: state.reFetch,
         //
         onCartOpen: handleCartOpen,
         onCartClose: handleCartClose,
@@ -150,6 +161,7 @@ export const MainContextProvider = (props) => {
         onAddCartItem: handleAddCartItem,
         onAddAmount: handleAddAmount,
         onDecreaseAmount: handleDecreaseAmount,
+        onReFetch: handleRefetch,
       }}
     >
       {props.children}
