@@ -1,7 +1,9 @@
-import { Fragment, useContext, useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import reactDom from "react-dom";
+import { useDispatch } from "react-redux";
 import styled, { css } from "styled-components";
-import MainContext from "../store/mainStore";
+import { menuAction } from "../store/menuSlice";
+import { uiAction } from "../store/uiSlice";
 import Button from "./UI/Button";
 import Input from "./UI/Form/Input";
 import useInput from "./UI/Form/useInput";
@@ -56,55 +58,52 @@ const StyledAddMenu = styled.section`
     `}
 `;
 const AddMenu = function (props) {
-  const ctx = useContext(MainContext);
+  const dispatch = useDispatch();
+  const handleCloseAddMenu = () => {
+    dispatch(uiAction.closeAddMenu());
+  };
+
+  // form state
   const [valid, setValid] = useState(false);
   const { state: descState, setState: setDescState } = useInput();
   const { state: titleState, setState: setTitleState } = useInput();
   const { state: priceState, setState: setPriceState } = useInput();
+
   const checkDesc = (val) => val.length > 0;
   const checkTitle = (val) => val.length > 0;
   const checkPrice = (val) => val > 0;
+
   const temp = descState.isValid && titleState.isValid && priceState.isValid;
+
   useEffect(() => {
     setValid(temp);
   }, [temp]);
-  const handleSubmit = async function (e) {
+
+  // handle submit
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!valid) return;
-    try {
-      const res = await fetch(
-        "https://learn-react-676ec-default-rtdb.asia-southeast1.firebasedatabase.app/menus.json",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: titleState.input,
-            descript: descState.input,
-            price: Math.round(priceState.input * 100) / 100,
-            id: Math.random().toString(),
-          }),
-        }
-      );
-      if (!res.ok) throw Error("Post fail");
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setDescState.reset();
-      setPriceState.reset();
-      setTitleState.reset();
-      setTimeout(() => {
-        ctx.onReFetch();
-        ctx.onAddMenuClose();
-      }, 500);
-    }
+    const menu = {
+      title: titleState.input
+        .trim()
+        .split(" ")
+        .map((e) => e[0].toUpperCase() + e.slice(1))
+        .join(" "),
+      descript: descState.input,
+      price: Math.round(priceState.input * 100) / 100,
+      id: Math.random().toString(),
+    };
+    dispatch(menuAction.addToMenu({ menu }));
+    setDescState.reset();
+    setPriceState.reset();
+    setTitleState.reset();
+    dispatch(uiAction.closeAddMenu());
   };
   return (
     <Fragment>
       {reactDom.createPortal(
         <StyledAddMenu valid={valid}>
-          <div className="overlay" onClick={ctx.onAddMenuClose}></div>
+          <div className="overlay" onClick={handleCloseAddMenu}></div>
           <div className="addMenu">
             <h1>Add a menu</h1>
             <form onSubmit={handleSubmit}>
@@ -133,7 +132,7 @@ const AddMenu = function (props) {
                 <Button type="submit" className="button">
                   Add
                 </Button>
-                <Button onClick={ctx.onAddMenuClose}>Close</Button>
+                <Button onClick={handleCloseAddMenu}>Close</Button>
               </div>
             </form>
           </div>

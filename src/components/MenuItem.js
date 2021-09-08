@@ -1,6 +1,7 @@
-import { useContext, useRef } from "react";
+import { useRef } from "react";
+import { useDispatch } from "react-redux";
 import styled from "styled-components";
-import MainContext from "../store/mainStore";
+import { cartAction } from "../store/cartSlice";
 import Button from "./UI/Button";
 const StyledMenuItem = styled.div`
   border-bottom: 2px solid rgba(0, 0, 0, 0.2);
@@ -33,17 +34,19 @@ const StyledMenuItem = styled.div`
   }
 `;
 const MenuItem = function (props) {
-  const ref = useRef(null);
-  const ctx = useContext(MainContext);
-  const handleAddCartItem = function () {
-    ctx.onAddCartItem(props.item, +ref.current.value);
+  const ref = useRef();
+  const dispatch = useDispatch();
+  const handleAddCartItem = () => {
+    dispatch(
+      cartAction.addCartItem({ amount: +ref.current.value, item: props.item })
+    );
   };
   return (
     <StyledMenuItem>
       <div>
         <h3>{props.item.title}</h3>
         <p>{props.item.descript}</p>
-        <p className="price">${props.item.price}</p>
+        <div className="price">${props.item.price}</div>
       </div>
       <form>
         <div>

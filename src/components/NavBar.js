@@ -1,6 +1,6 @@
-import { useContext } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
-import MainContext from "../store/mainStore";
+import { uiAction } from "../store/uiSlice";
 
 const StyledNavBar = styled.nav`
   position: sticky;
@@ -21,7 +21,7 @@ const StyledNavBar = styled.nav`
   }
   .nav__item {
     padding: 0.6rem 3rem;
-    border-radius: 2rem;
+    border-radius: 1.3rem;
     font-size: 1.2rem;
     font-weight: 600;
     background: rgb(117, 46, 19);
@@ -40,18 +40,26 @@ const StyledNavBar = styled.nav`
   }
 `;
 const NavBar = (props) => {
-  const ctx = useContext(MainContext);
-  const totalItem = ctx.cartItem.reduce((total, item) => {
-    return (total += item.amount);
-  }, 0);
+  const dispatch = useDispatch();
+  const items = useSelector((state) => state.cart.items);
+  const totalQuantity = items.reduce(
+    (current, e) => (current += e.quantity),
+    0
+  );
+  const handleOpenCart = () => {
+    dispatch(uiAction.openCart());
+  };
+  const handleOpenAddMenu = () => {
+    dispatch(uiAction.openAddMenu());
+  };
   return (
     <StyledNavBar className={props.className}>
       <div className="nav__title">ReactMeals</div>
-      <div className="nav__item" onClick={ctx.onAddMenuOpen}>
+      <div className="nav__item" onClick={handleOpenAddMenu}>
         Add Menu
       </div>
-      <div className="nav__item" onClick={ctx.onCartOpen}>
-        Your Cart<span className="cart__number">{totalItem}</span>
+      <div className="nav__item" onClick={handleOpenCart}>
+        Your Cart<span className="cart__number">{totalQuantity}</span>
       </div>
     </StyledNavBar>
   );
